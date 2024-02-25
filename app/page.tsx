@@ -10,14 +10,15 @@ import { FaSlash } from "react-icons/fa6";
 import { IoMdMail } from "react-icons/io";
 import { IoNotificationsSharp } from "react-icons/io5";
 import { CiSearch } from "react-icons/ci";
-import { Inter } from "next/font/google";
-import { BiLogoTumblr } from "react-icons/bi";
+
 import FeedCard from "@/Components/Feedcard";
 import { CgMoreO } from "react-icons/cg";
 import { CredentialResponse, GoogleLogin } from "@react-oauth/google";
 import toast from "react-hot-toast";
 import { graphqlClient } from "@/clients/api";
-import { verifyUserTokenQuery } from "./graphql/query/user";
+import { verifyUserGoogleTokenQuery } from "./graphql/query/user";
+import { useCurrentUser } from "./hooks/user";
+import { useQueries, useQueryClient } from "@tanstack/react-query";
 
 interface Twittersidebar {
   title: string;
@@ -70,21 +71,32 @@ const sideBarMenuItems: Twittersidebar[] = [
 ];
 
 export default function Home() {
-  const handleGoogleWithGoogle = useCallback(
+  const { user } = useCurrentUser();
+  const queryClient = useQueryClient();
+  const handleLoginWithGoogle = useCallback(
     async (cred: CredentialResponse) => {
       const googleToken = cred.credential;
-      if (!googleToken) return toast.error(`Google token not found`);
+      if (!googleToken) {
+        return toast.error("Google token not found ");
+      }
+
       const { verifyGoogleToken } = await graphqlClient.request(
-        verifyUserTokenQuery,
-        { token: googleToken }
+        verifyUserGoogleTokenQuery,
+        {
+          token: googleToken,
+        }
       );
-      toast.success("Verified with success🎉");
-      console.log("jaishreeram", verifyGoogleToken);
+      toast.success("Verified Success🎆🎇");
+      console.log(verifyGoogleToken);
+
       if (verifyGoogleToken) {
         window.localStorage.setItem("token", verifyGoogleToken);
       }
+      await queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === 'current-user' });
+
+ 
     },
-    []
+    [queryClient]
   );
   return (
     <div>
@@ -109,19 +121,19 @@ export default function Home() {
               <p>Post</p>
             </button>
           </div>
-          <div className="flex my-4 cursor-pointer   p-4 align-middle justify-between items-center">
-            <Image
-              className="rounded-full"
-              src="https://th.bing.com/th?id=OIP._dQgVJsBnH9TmgOdlw9-NgHaDt&w=349&h=174&c=8&rs=1&qlt=90&o=6&dpr=1.5&pid=3.1&rm=2"
-              alt="logo"
-              height={50}
-              width={50}
-            />
+          <div className="flex my-4 cursor-pointer   p-4 align-middle justify-around hover:bg-slate-500 items-center w-3/4 bg-slate-800 rounded-2xl">
+            {user && user.profileImageURL && (
+               <Image
+               className="rounded-full"
+               src={user?.profileImageURL}
+               alt="logo"
+               height={40}
+               width={40}
+             />
+           )}
             <div className="flex-col my-1">
-              <p>Yuvraj Singh</p>
-              <p className="text-sm">@yyuvrajssingh</p>
+              <p>{user?.firstName} {user?.lastName}</p>
             </div>
-            <p className="text-white font-bold">...</p>
           </div>
         </div>
         <div className="col-span-5 h-screen overflow-scroll scroll-hide container-snap     border-r-[1px] border-l-[1px] border-gray-600">
@@ -130,13 +142,19 @@ export default function Home() {
           <FeedCard />
           <FeedCard />
         </div>
+        {!user &&
+          (
+          
         <div className="col-span-3">
-          <div className=" p-5 bg-slate-700  rounded-lg">
-            <h1 className="my-2 text-2xl">New to X?</h1>
-            <GoogleLogin onSuccess={handleGoogleWithGoogle} />
-          </div>
-        </div>
-      </div>
+            <div className=" p-5 bg-slate-700  rounded-lg">
+              <h1 className="my-2 text-2xl">New to X?</h1>
+              <GoogleLogin onSuccess={handleLoginWithGoogle} />
+            </div>
+            </div>
+          )
+          
+      }
+</div>
     </div>
   );
 }

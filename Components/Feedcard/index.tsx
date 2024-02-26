@@ -5,6 +5,7 @@ import { CiHeart } from "react-icons/ci";
 import { IoIosStats } from "react-icons/io";
 import { FaRegBookmark } from "react-icons/fa6";
 import { Tweet } from "@/app/gql/graphql";
+import Link from "next/link";
 
 interface FeedCardProps{
   data: Tweet
@@ -17,7 +18,7 @@ const FeedCard: React.FC<FeedCardProps> = (props) => {
       <div className="border border-l-0 border-r-0 border-b-0 border-gray-200 p-5 hover:bg-gray-900 transition-all cursor-pointer">
         <div className="grid grid-cols-12 gap-1">
           <div className="col-span-1">
-            {data .author?.profileImageURL && (
+            {data.author?.profileImageURL && (
               <Image
                 className=" rounded-full"
                 src={data.author?.profileImageURL}
@@ -28,7 +29,9 @@ const FeedCard: React.FC<FeedCardProps> = (props) => {
             )}
           </div>
           <div className="col-span-11">
-            <h5>{data.author?.firstName} {data.author?.lastName}</h5>
+            <Link href={`/${data.author?.id}`}>
+            <h5 className="hover:bg-slate-500">{data.author?.firstName}  {data.author?.lastName}</h5>            
+            </Link>
             <p>
          {data.content}
             </p>

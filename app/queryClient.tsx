@@ -1,5 +1,4 @@
 'use client'
-// Import necessary dependencies
 import {
     QueryClient,
     QueryClientProvider
